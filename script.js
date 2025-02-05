@@ -135,5 +135,71 @@ function showMessage(msg, tipo = 'success') {
     setTimeout(() => div.style.display = 'none', 3000);
 }
 
+// ================= FUNÇÃO PARA GERAR PDF =================
+function gerarRelatorioPDF() {
+    const filtroData = document.getElementById('filtroData').value;
+    
+    if (!filtroData) {
+        showMessage('Selecione uma data para gerar o relatório!', 'error');
+        return;
+    }
+
+    const registrosFiltrados = registros.filter(registro => 
+        registro.data === filtroData
+    );
+
+    if (registrosFiltrados.length === 0) {
+        showMessage('Nenhum material encontrado para esta data!', 'error');
+        return;
+    }
+
+    // Configuração do PDF
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    // Título do Relatório
+    doc.setFontSize(18);
+    doc.text("Relatório de Materiais Civis", 14, 15);
+    doc.setFontSize(12);
+    doc.text(`Data: ${formatarData(filtroData)}`, 14, 25);
+
+    // Cabeçalho da Tabela
+    const headers = [["Data", "Material", "Quantidade"]];
+
+    // Dados da Tabela
+    const data = registrosFiltrados.map(registro => [
+        formatarData(registro.data),
+        registro.nomeMaterial,
+        registro.quantidade
+    ]);
+
+    // Gerar Tabela
+    doc.autoTable({
+        head: headers,
+        body: data,
+        startY: 35,
+        theme: 'grid',
+        styles: { fontSize: 10 },
+        headStyles: { fillColor: [41, 128, 185], textColor: 255 },
+        columnStyles: {
+            0: { cellWidth: 30 },
+            1: { cellWidth: 120 },
+            2: { cellWidth: 30 }
+        }
+    });
+
+    // Salvar PDF
+    doc.save(`relatorio_materiais_${filtroData}.pdf`);
+}
+
+// Função para formatar data
+function formatarData(dataString) {
+    const data = new Date(dataString);
+    const dia = String(data.getDate()).padStart(2, '0');
+    const mes = String(data.getMonth() + 1).padStart(2, '0');
+    const ano = data.getFullYear();
+    return `${dia}/${mes}/${ano}`;
+}
+
 // ================= INICIALIZAÇÃO =================
 carregarDados();
