@@ -33,7 +33,7 @@ label {
     font-weight: bold;
 }
 
-input, select, button {
+input, button {
     margin-bottom: 15px;
     padding: 10px;
     border: 1px solid #ccc;
@@ -49,45 +49,4 @@ button {
 
 button:hover {
     background-color: #218838;
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-}
-
-th, td {
-    border: 1px solid #ddd;
-    padding: 10px;
-    text-align: center;
-}
-
-th {
-    background-color: #f2f2f2;
-}
-
-.show-details-btn, .excluir-btn {
-    padding: 5px 10px;
-    border: none;
-    cursor: pointer;
-    margin: 2px;
-}
-
-.show-details-btn {
-    background-color: #007bff;
-    color: #fff;
-}
-
-.show-details-btn:hover {
-    background-color: #0056b3;
-}
-
-.excluir-btn {
-    background-color: #dc3545;
-    color: #fff;
-}
-
-.excluir-btn:hover {
-    background-color: #c82333;
 }
