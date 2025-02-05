@@ -9,7 +9,6 @@ function validarFormulario() {
     const dataRegistro = document.getElementById('dataRegistro').value;
     const nomeMaterial = document.getElementById('nomeMaterial').value.trim();
     const quantidade = document.getElementById('quantidade').value.trim();
-    const operacao = document.getElementById('operacao').value;
 
     if (!dataRegistro || !nomeMaterial || !quantidade) {
         alert('Preencha todos os campos obrigatórios!');
@@ -20,41 +19,19 @@ function validarFormulario() {
         id: Date.now(),
         data: dataRegistro,
         material: nomeMaterial,
-        quantidade: parseInt(quantidade),
-        operacao: operacao
+        quantidade: parseInt(quantidade)
     };
 
     registros.unshift(registro);
     localStorage.setItem('registrosEstoque', JSON.stringify(registros));
     limparFormulario();
-    atualizarHistorico(registros);
 }
 
-// Função para atualizar o histórico
-function atualizarHistorico(registrosFiltrados) {
-    const tbody = document.getElementById('historicoBody');
-    tbody.innerHTML = '';
-
-    registrosFiltrados.forEach(registro => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${formatarData(registro.data)}</td>
-            <td>${registro.material}</td>
-            <td>${registro.quantidade}</td>
-            <td>${registro.operacao === 'entrada' ? 'Entrada' : 'Saída'}</td>
-            <td>
-                <button class="excluir-btn" onclick="excluirRegistro(${registro.id})">Excluir</button>
-            </td>
-        `;
-        tbody.appendChild(tr);
-    });
-}
-
-// Função para excluir registro
-function excluirRegistro(id) {
-    registros = registros.filter(registro => registro.id !== id);
-    localStorage.setItem('registrosEstoque', JSON.stringify(registros));
-    atualizarHistorico(registros);
+// Função para limpar formulário
+function limparFormulario() {
+    document.getElementById('dataRegistro').value = '';
+    document.getElementById('nomeMaterial').value = '';
+    document.getElementById('quantidade').value = '';
 }
 
 // Função para formatar data
@@ -66,13 +43,32 @@ function formatarData(dataString) {
     return `${dia}/${mes}/${ano}`;
 }
 
-// Função para limpar formulário
-function limparFormulario() {
-    document.getElementById('dataRegistro').value = '';
-    document.getElementById('nomeMaterial').value = '';
-    document.getElementById('quantidade').value = '';
-    document.getElementById('operacao').value = 'entrada';
-}
+// Função para gerar relatório PDF
+function gerarRelatorioPDF() {
+    const filtroData = document.getElementById('filtroData').value;
 
-// Carregar histórico ao iniciar
-atualizarHistorico(registros);
+    const registrosFiltrados = registros.filter(registro => {
+        return registro.data === filtroData;
+    });
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    doc.text("Relatório de Estoque", 10, 10);
+    doc.text(`Data: ${formatarData(filtroData)}`, 10, 20);
+
+    const tableHeaders = [["Data", "Material", "Quantidade"]];
+    const tableData = registrosFiltrados.map(registro => [
+        formatarData(registro.data),
+        registro.material,
+        registro.quantidade
+    ]);
+
+    doc.autoTable({
+        head: tableHeaders,
+        body: tableData,
+        startY: 30
+    });
+
+    doc.save("relatorio_estoque.pdf");
+}
