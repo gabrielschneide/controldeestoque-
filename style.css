@@ -45,17 +45,16 @@ h1::after {
     animation: fadeIn 0.5s ease-out;
 }
 
-.form-group {
-    margin-bottom: 1.5rem;
+.form-section, .report-section, .management-section {
+    background: white;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    margin-top: 2rem;
 }
 
-.form-group label {
-    font-weight: 600;
-    color: var(--primary-color);
-    margin-bottom: 0.5rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+.form-group {
+    margin-bottom: 1.5rem;
 }
 
 input[type="date"],
@@ -69,15 +68,8 @@ input[type="number"] {
     transition: all 0.3s ease;
 }
 
-input[type="date"]:focus,
-input[type="text"]:focus,
-input[type="number"]:focus {
-    border-color: var(--secondary-color);
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
-}
-
 button {
+    background: var(--secondary-color);
     color: white;
     padding: 0.8rem 1.5rem;
     border: none;
@@ -92,71 +84,12 @@ button {
     gap: 0.5rem;
 }
 
-button:hover {
-    transform: translateY(-1px);
-    box-shadow: var(--shadow);
+.refresh-btn {
+    background: var(--success-color);
 }
 
-button:active {
-    transform: translateY(0);
-}
-
-.report-section,
-.management-section {
-    background: white;
-    padding: 2rem;
-    border-radius: 10px;
-    box-shadow: var(--shadow);
-    margin-top: 2rem;
-}
-
-.report-controls,
-.search-controls {
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-    max-width: 500px;
-    margin: 1rem auto;
-}
-
-#filtroData,
-#dataPesquisa {
-    flex: 1;
-}
-
-.status-message {
-    padding: 1rem;
-    border-radius: 6px;
-    margin: 1rem 0;
-    text-align: center;
-    display: none;
-}
-
-.success {
-    background: #e8f5e9;
-    color: var(--success-color);
-    border: 1px solid #a5d6a7;
-}
-
-.error {
-    background: #ffebee;
-    color: var(--danger-color);
-    border: 1px solid #ef9a9a;
-}
-
-.hidden-results {
-    max-height: 0;
-    overflow: hidden;
-    transition: all 0.3s ease;
-    background: #f8f9fa;
-    border-radius: 6px;
-}
-
-.show-results {
-    max-height: 500px;
-    padding: 1rem;
-    margin-top: 1rem;
-    border: 1px solid #eee;
+.refresh-btn:hover {
+    background: #219a52;
 }
 
 .registro-item {
@@ -165,60 +98,15 @@ button:active {
     align-items: center;
     padding: 1rem;
     border-bottom: 1px solid #eee;
-    transition: all 0.3s ease;
 }
 
-.registro-item:hover {
-    background: #fff;
-    transform: translateX(5px);
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
-.registro-acoes {
-    display: flex;
-    gap: 0.5rem;
+.loading {
+    animation: spin 1s linear infinite;
 }
 
-button[class*="-btn"] {
-    padding: 0.5rem 0.8rem;
-}
-
-.editar-btn {
-    background: var(--warning-color) !important;
-}
-
-.excluir-btn {
-    background: var(--danger-color) !important;
-}
-
-#submitButton {
-    background: var(--secondary-color);
-}
-
-#submitButton:hover {
-    background: var(--hover-color);
-}
-
-@media (max-width: 768px) {
-    body {
-        padding: 1rem;
-    }
-    
-    .container {
-        padding: 1.5rem;
-    }
-    
-    .report-controls,
-    .search-controls {
-        flex-direction: column;
-    }
-    
-    button {
-        width: 100%;
-        justify-content: center;
-    }
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
+/* Mantenha o restante do CSS anterior */
