@@ -1,6 +1,7 @@
 "use strict";
 
 let registros = JSON.parse(localStorage.getItem('registrosMateriais')) || [];
+let editandoId = null;
 
 function showMessage(message, type = 'success') {
     const statusDiv = document.getElementById('statusMessage');
@@ -23,17 +24,32 @@ function validarFormulario() {
         return;
     }
 
-    const registro = {
-        id: Date.now(),
-        data: dataRegistro,
-        nomeMaterial: nomeMaterial,
-        quantidade: quantidade
-    };
+    if(editandoId) {
+        const index = registros.findIndex(r => r.id === editandoId);
+        registros[index] = {
+            ...registros[index],
+            data: dataRegistro,
+            nomeMaterial: nomeMaterial,
+            quantidade: quantidade
+        };
+        showMessage('Registro atualizado com sucesso!');
+        editandoId = null;
+    } else {
+        const registro = {
+            id: Date.now(),
+            data: dataRegistro,
+            nomeMaterial: nomeMaterial,
+            quantidade: quantidade
+        };
+        registros.unshift(registro);
+        showMessage('Material adicionado com sucesso!');
+    }
 
-    registros.unshift(registro);
     localStorage.setItem('registrosMateriais', JSON.stringify(registros));
     limparFormulario();
-    showMessage('Material adicionado com sucesso!');
+    document.getElementById('submitButton').innerHTML = 
+        '<i class="fas fa-save"></i> Adicionar Material';
+    buscarRegistros();
 }
 
 function limparFormulario() {
@@ -44,10 +60,7 @@ function limparFormulario() {
 
 function formatarData(dataString) {
     const data = new Date(dataString);
-    const dia = String(data.getDate()).padStart(2, '0');
-    const mes = String(data.getMonth() + 1).padStart(2, '0');
-    const ano = data.getFullYear();
-    return `${dia}/${mes}/${ano}`;
+    return data.toLocaleDateString('pt-BR');
 }
 
 function gerarRelatorioPDF() {
@@ -98,3 +111,66 @@ function gerarRelatorioPDF() {
 
     doc.save(`relatorio_materiais_${filtroData}.pdf`);
 }
+
+function buscarRegistros() {
+    const dataSelecionada = document.getElementById('dataPesquisa').value;
+    const resultadosDiv = document.getElementById('resultadosPesquisa');
+    
+    if(!dataSelecionada) {
+        showMessage('Selecione uma data para buscar!', 'error');
+        return;
+    }
+
+    const registrosFiltrados = registros.filter(registro => 
+        registro.data === dataSelecionada
+    );
+
+    resultadosDiv.innerHTML = registrosFiltrados.map(registro => `
+        <div class="registro-item" data-id="${registro.id}">
+            <div>
+                <strong>${registro.nomeMaterial}</strong><br>
+                <small>Quantidade: ${registro.quantidade}</small>
+            </div>
+            <div class="registro-acoes">
+                <button class="editar-btn" onclick="editarRegistro(${registro.id})">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="excluir-btn" onclick="excluirRegistro(${registro.id})">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+    `).join('');
+
+    resultadosDiv.classList.toggle('show-results', registrosFiltrados.length > 0);
+    
+    if(registrosFiltrados.length === 0) {
+        showMessage('Nenhum registro encontrado para esta data!', 'error');
+    }
+}
+
+function editarRegistro(id) {
+    editandoId = id;
+    const registro = registros.find(r => r.id === id);
+    
+    document.getElementById('dataRegistro').value = registro.data;
+    document.getElementById('nomeMaterial').value = registro.nomeMaterial;
+    document.getElementById('quantidade').value = registro.quantidade;
+    
+    document.getElementById('submitButton').innerHTML = 
+        '<i class="fas fa-sync"></i> Atualizar Material';
+        
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function excluirRegistro(id) {
+    if(confirm('Tem certeza que deseja excluir este registro permanentemente?')) {
+        registros = registros.filter(registro => registro.id !== id);
+        localStorage.setItem('registrosMateriais', JSON.stringify(registros));
+        buscarRegistros();
+        showMessage('Registro excluído com sucesso!');
+    }
+}
+
+// Inicialização
+document.getElementById('dataPesquisa').valueAsDate = new Date();
