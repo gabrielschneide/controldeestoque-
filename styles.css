@@ -9,7 +9,7 @@
 }
 
 body {
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-family: 'Roboto', sans-serif;
     background-color: var(--background-color);
     color: var(--text-color);
     max-width: 1000px;
@@ -40,6 +40,7 @@ h1::after {
     border-radius: 10px;
     box-shadow: var(--shadow);
     margin-bottom: 2rem;
+    animation: fadeIn 0.5s ease-out;
 }
 
 .form-group {
@@ -50,6 +51,9 @@ h1::after {
     font-weight: 600;
     color: var(--primary-color);
     margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 input[type="date"],
@@ -159,8 +163,4 @@ button:active {
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(-10px); }
     to { opacity: 1; transform: translateY(0); }
-}
-
-.container {
-    animation: fadeIn 0.5s ease-out;
 }
