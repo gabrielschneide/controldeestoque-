@@ -2,13 +2,24 @@
 
 let registros = JSON.parse(localStorage.getItem('registrosMateriais')) || [];
 
+function showMessage(message, type = 'success') {
+    const statusDiv = document.getElementById('statusMessage');
+    statusDiv.className = `status-message ${type}`;
+    statusDiv.textContent = message;
+    statusDiv.style.display = 'block';
+    
+    setTimeout(() => {
+        statusDiv.style.display = 'none';
+    }, 3000);
+}
+
 function validarFormulario() {
     const dataRegistro = document.getElementById('dataRegistro').value;
     const nomeMaterial = document.getElementById('nomeMaterial').value.trim();
     const quantidade = document.getElementById('quantidade').value;
 
     if (!dataRegistro || !nomeMaterial || !quantidade) {
-        alert('Preencha todos os campos obrigatórios!');
+        showMessage('Preencha todos os campos obrigatórios!', 'error');
         return;
     }
 
@@ -22,7 +33,7 @@ function validarFormulario() {
     registros.unshift(registro);
     localStorage.setItem('registrosMateriais', JSON.stringify(registros));
     limparFormulario();
-    alert('Material adicionado com sucesso!');
+    showMessage('Material adicionado com sucesso!');
 }
 
 function limparFormulario() {
@@ -43,7 +54,7 @@ function gerarRelatorioPDF() {
     const filtroData = document.getElementById('filtroData').value;
     
     if (!filtroData) {
-        alert('Selecione uma data para gerar o relatório!');
+        showMessage('Selecione uma data para gerar o relatório!', 'error');
         return;
     }
 
@@ -52,7 +63,7 @@ function gerarRelatorioPDF() {
     );
 
     if (registrosFiltrados.length === 0) {
-        alert('Nenhum material encontrado para esta data!');
+        showMessage('Nenhum material encontrado para esta data!', 'error');
         return;
     }
 
