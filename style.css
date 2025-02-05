@@ -4,6 +4,8 @@
     --background-color: #f8f9fa;
     --text-color: #2c3e50;
     --success-color: #27ae60;
+    --warning-color: #f1c40f;
+    --danger-color: #e74c3c;
     --hover-color: #2980b9;
     --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
@@ -76,7 +78,6 @@ input[type="number"]:focus {
 }
 
 button {
-    background-color: var(--secondary-color);
     color: white;
     padding: 0.8rem 1.5rem;
     border: none;
@@ -92,7 +93,6 @@ button {
 }
 
 button:hover {
-    background-color: var(--hover-color);
     transform: translateY(-1px);
     box-shadow: var(--shadow);
 }
@@ -101,7 +101,8 @@ button:active {
     transform: translateY(0);
 }
 
-.report-section {
+.report-section,
+.management-section {
     background: white;
     padding: 2rem;
     border-radius: 10px;
@@ -109,7 +110,8 @@ button:active {
     margin-top: 2rem;
 }
 
-.report-controls {
+.report-controls,
+.search-controls {
     display: flex;
     gap: 1rem;
     align-items: center;
@@ -117,7 +119,8 @@ button:active {
     margin: 1rem auto;
 }
 
-#filtroData {
+#filtroData,
+#dataPesquisa {
     flex: 1;
 }
 
@@ -131,14 +134,68 @@ button:active {
 
 .success {
     background: #e8f5e9;
-    color: #27ae60;
+    color: var(--success-color);
     border: 1px solid #a5d6a7;
 }
 
 .error {
     background: #ffebee;
-    color: #c62828;
+    color: var(--danger-color);
     border: 1px solid #ef9a9a;
+}
+
+.hidden-results {
+    max-height: 0;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    background: #f8f9fa;
+    border-radius: 6px;
+}
+
+.show-results {
+    max-height: 500px;
+    padding: 1rem;
+    margin-top: 1rem;
+    border: 1px solid #eee;
+}
+
+.registro-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid #eee;
+    transition: all 0.3s ease;
+}
+
+.registro-item:hover {
+    background: #fff;
+    transform: translateX(5px);
+}
+
+.registro-acoes {
+    display: flex;
+    gap: 0.5rem;
+}
+
+button[class*="-btn"] {
+    padding: 0.5rem 0.8rem;
+}
+
+.editar-btn {
+    background: var(--warning-color) !important;
+}
+
+.excluir-btn {
+    background: var(--danger-color) !important;
+}
+
+#submitButton {
+    background: var(--secondary-color);
+}
+
+#submitButton:hover {
+    background: var(--hover-color);
 }
 
 @media (max-width: 768px) {
@@ -150,7 +207,8 @@ button:active {
         padding: 1.5rem;
     }
     
-    .report-controls {
+    .report-controls,
+    .search-controls {
         flex-direction: column;
     }
     
