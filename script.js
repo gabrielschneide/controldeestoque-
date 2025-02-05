@@ -1,176 +1,139 @@
 "use strict";
 
-let registros = JSON.parse(localStorage.getItem('registrosMateriais')) || [];
+// Configuração do JSONBin.io (SUAS CREDENCIAIS JÁ ESTÃO AQUI!)
+const BIN_ID = "67a3eeb29fd07d161ce4a764";
+const API_KEY = "$2a$10$7/4kIky21hKzyb3cd6xTf.X9EFsMKqgiMokRv37yoXy/nHJpFAsei";
+
+let registros = [];
 let editandoId = null;
 
-function showMessage(message, type = 'success') {
-    const statusDiv = document.getElementById('statusMessage');
-    statusDiv.className = `status-message ${type}`;
-    statusDiv.textContent = message;
-    statusDiv.style.display = 'block';
-    
-    setTimeout(() => {
-        statusDiv.style.display = 'none';
-    }, 3000);
+// ================= FUNÇÕES PRINCIPAIS =================
+async function carregarDados() {
+    try {
+        document.querySelector('.refresh-btn i').classList.add('loading');
+        
+        const response = await axios.get(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+            headers: { 'X-Master-Key': API_KEY }
+        });
+        
+        registros = response.data.record.materiais;
+        showMessage('Dados atualizados da nuvem!', 'success');
+        buscarRegistros();
+        
+    } catch (error) {
+        showMessage('Falha ao carregar dados!', 'error');
+    } finally {
+        document.querySelector('.refresh-btn i').classList.remove('loading');
+    }
 }
 
-function validarFormulario() {
-    const dataRegistro = document.getElementById('dataRegistro').value;
-    const nomeMaterial = document.getElementById('nomeMaterial').value.trim();
-    const quantidade = document.getElementById('quantidade').value;
+async function salvarNaNuvem() {
+    try {
+        await axios.put(`https://api.jsonbin.io/v3/b/${BIN_ID}`, 
+            { materiais: registros },
+            { headers: { 'X-Master-Key': API_KEY } }
+        );
+    } catch (error) {
+        showMessage('Erro ao sincronizar com a nuvem!', 'error');
+    }
+}
 
-    if (!dataRegistro || !nomeMaterial || !quantidade) {
-        showMessage('Preencha todos os campos obrigatórios!', 'error');
+async function validarFormulario() {
+    const data = document.getElementById('dataRegistro').value;
+    const nome = document.getElementById('nomeMaterial').value.trim();
+    const qtd = document.getElementById('quantidade').value;
+
+    if (!data || !nome || !qtd) {
+        showMessage('Preencha todos os campos!', 'error');
         return;
     }
 
-    if(editandoId) {
-        const index = registros.findIndex(r => r.id === editandoId);
-        registros[index] = {
-            ...registros[index],
-            data: dataRegistro,
-            nomeMaterial: nomeMaterial,
-            quantidade: quantidade
-        };
-        showMessage('Registro atualizado com sucesso!');
-        editandoId = null;
-    } else {
-        const registro = {
-            id: Date.now(),
-            data: dataRegistro,
-            nomeMaterial: nomeMaterial,
-            quantidade: quantidade
-        };
-        registros.unshift(registro);
-        showMessage('Material adicionado com sucesso!');
-    }
+    const novoRegistro = {
+        id: Date.now(),
+        data,
+        nomeMaterial: nome,
+        quantidade: qtd
+    };
 
-    localStorage.setItem('registrosMateriais', JSON.stringify(registros));
-    limparFormulario();
-    document.getElementById('submitButton').innerHTML = 
-        '<i class="fas fa-save"></i> Adicionar Material';
-    buscarRegistros();
-}
-
-function limparFormulario() {
-    document.getElementById('dataRegistro').value = '';
-    document.getElementById('nomeMaterial').value = '';
-    document.getElementById('quantidade').value = '';
-}
-
-function formatarData(dataString) {
-    const data = new Date(dataString);
-    return data.toLocaleDateString('pt-BR');
-}
-
-function gerarRelatorioPDF() {
-    const filtroData = document.getElementById('filtroData').value;
-    
-    if (!filtroData) {
-        showMessage('Selecione uma data para gerar o relatório!', 'error');
-        return;
-    }
-
-    const registrosFiltrados = registros.filter(registro => 
-        registro.data === filtroData
-    );
-
-    if (registrosFiltrados.length === 0) {
-        showMessage('Nenhum material encontrado para esta data!', 'error');
-        return;
-    }
-
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-
-    doc.setFontSize(18);
-    doc.text("Relatório de Materiais Civis", 14, 15);
-    doc.setFontSize(12);
-    doc.text(`Data: ${formatarData(filtroData)}`, 14, 25);
-
-    const tableHeaders = [["Data", "Material", "Quantidade"]];
-    const tableData = registrosFiltrados.map(registro => [
-        formatarData(registro.data),
-        registro.nomeMaterial,
-        registro.quantidade
-    ]);
-
-    doc.autoTable({
-        head: tableHeaders,
-        body: tableData,
-        startY: 35,
-        theme: 'grid',
-        styles: { fontSize: 10 },
-        headStyles: { fillColor: [41, 128, 185], textColor: 255 },
-        columnStyles: {
-            0: { cellWidth: 30 },
-            1: { cellWidth: 120 },
-            2: { cellWidth: 30 }
+    try {
+        if(editandoId) {
+            const index = registros.findIndex(r => r.id === editandoId);
+            registros[index] = novoRegistro;
+            showMessage('Registro atualizado!');
+        } else {
+            registros.push(novoRegistro);
+            showMessage('Registro salvo na nuvem!');
         }
-    });
 
-    doc.save(`relatorio_materiais_${filtroData}.pdf`);
+        await salvarNaNuvem();
+        carregarDados();
+        limparFormulario();
+
+    } catch (error) {
+        showMessage('Erro ao salvar!', 'error');
+    }
 }
 
+// ================= FUNÇÕES AUXILIARES =================
 function buscarRegistros() {
     const dataSelecionada = document.getElementById('dataPesquisa').value;
-    const resultadosDiv = document.getElementById('resultadosPesquisa');
+    const resultados = registros.filter(r => r.data === dataSelecionada);
     
-    if(!dataSelecionada) {
-        showMessage('Selecione uma data para buscar!', 'error');
-        return;
-    }
-
-    const registrosFiltrados = registros.filter(registro => 
-        registro.data === dataSelecionada
-    );
-
-    resultadosDiv.innerHTML = registrosFiltrados.map(registro => `
-        <div class="registro-item" data-id="${registro.id}">
+    const resultadosDiv = document.getElementById('resultadosPesquisa');
+    resultadosDiv.innerHTML = resultados.map(r => `
+        <div class="registro-item">
             <div>
-                <strong>${registro.nomeMaterial}</strong><br>
-                <small>Quantidade: ${registro.quantidade}</small>
+                <strong>${r.nomeMaterial}</strong><br>
+                <small>${r.data} - Quantidade: ${r.quantidade}</small>
             </div>
             <div class="registro-acoes">
-                <button class="editar-btn" onclick="editarRegistro(${registro.id})">
+                <button class="editar-btn" onclick="editarRegistro(${r.id})">
                     <i class="fas fa-edit"></i>
                 </button>
-                <button class="excluir-btn" onclick="excluirRegistro(${registro.id})">
+                <button class="excluir-btn" onclick="excluirRegistro(${r.id})">
                     <i class="fas fa-trash"></i>
                 </button>
             </div>
         </div>
     `).join('');
 
-    resultadosDiv.classList.toggle('show-results', registrosFiltrados.length > 0);
-    
-    if(registrosFiltrados.length === 0) {
-        showMessage('Nenhum registro encontrado para esta data!', 'error');
-    }
+    resultadosDiv.classList.toggle('show-results', resultados.length > 0);
 }
 
 function editarRegistro(id) {
-    editandoId = id;
     const registro = registros.find(r => r.id === id);
     
     document.getElementById('dataRegistro').value = registro.data;
     document.getElementById('nomeMaterial').value = registro.nomeMaterial;
     document.getElementById('quantidade').value = registro.quantidade;
     
-    document.getElementById('submitButton').innerHTML = 
-        '<i class="fas fa-sync"></i> Atualizar Material';
-        
+    editandoId = id;
+    document.getElementById('submitButton').innerHTML = '<i class="fas fa-sync"></i> Atualizar';
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-function excluirRegistro(id) {
-    if(confirm('Tem certeza que deseja excluir este registro permanentemente?')) {
-        registros = registros.filter(registro => registro.id !== id);
-        localStorage.setItem('registrosMateriais', JSON.stringify(registros));
-        buscarRegistros();
-        showMessage('Registro excluído com sucesso!');
+async function excluirRegistro(id) {
+    if(confirm('Excluir registro permanentemente?')) {
+        registros = registros.filter(r => r.id !== id);
+        await salvarNaNuvem();
+        carregarDados();
+        showMessage('Registro excluído!');
     }
 }
 
-// Inicialização
-document.getElementById('dataPesquisa').valueAsDate = new Date();
+function limparFormulario() {
+    document.getElementById('materialForm').reset();
+    editandoId = null;
+    document.getElementById('submitButton').innerHTML = '<i class="fas fa-save"></i> Salvar Registro';
+}
+
+function showMessage(msg, tipo = 'success') {
+    const div = document.getElementById('statusMessage');
+    div.className = `status-message ${tipo}`;
+    div.textContent = msg;
+    div.style.display = 'block';
+    setTimeout(() => div.style.display = 'none', 3000);
+}
+
+// ================= INICIALIZAÇÃO =================
+carregarDados();
