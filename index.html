@@ -2,58 +2,82 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Controle de Estoque - Materiais Civis</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <!-- Supabase -->
-    <script src="https://unpkg.com/@supabase/supabase-js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <!-- jsPDF para geração de relatórios -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
-    <div class="container">
-        <h1>🏗️ Controle de Estoque - Materiais Civis</h1>
+    <div class="container" role="main">
+        <header class="main-header">
+            <h1>🏗️ Controle de Estoque - Materiais Civis</h1>
+        </header>
 
         <!-- Formulário Principal -->
-        <div class="form-section">
-            <form id="materialForm">
-                <div class="form-group">
-                    <label for="dataRegistro"><i class="fas fa-calendar-alt"></i> Data:</label>
-                    <input type="date" id="dataRegistro" required>
-                </div>
+        <section aria-labelledby="formTitle">
+            <h2 id="formTitle" class="sr-only">Formulário de Registro</h2>
+            <div class="form-section">
+                <form id="materialForm" onsubmit="event.preventDefault(); validarFormulario()">
+                    <div class="form-group">
+                        <label for="dataRegistro">
+                            <i class="fas fa-calendar-alt"></i> Data:
+                        </label>
+                        <input type="date" id="dataRegistro" required aria-required="true">
+                    </div>
 
-                <div class="form-group">
-                    <label for="nomeMaterial"><i class="fas fa-box-open"></i> Nome do Material:</label>
-                    <input type="text" id="nomeMaterial" required>
-                </div>
+                    <div class="form-group">
+                        <label for="nomeMaterial">
+                            <i class="fas fa-box-open"></i> Nome do Material:
+                        </label>
+                        <input type="text" id="nomeMaterial" required aria-required="true">
+                    </div>
 
-                <div class="form-group">
-                    <label for="quantidade"><i class="fas fa-cubes"></i> Quantidade:</label>
-                    <input type="number" id="quantidade" required>
-                </div>
+                    <div class="form-group">
+                        <label for="quantidade">
+                            <i class="fas fa-cubes"></i> Quantidade:
+                        </label>
+                        <input type="number" id="quantidade" required aria-required="true" min="1">
+                    </div>
 
-                <button type="button" id="submitButton" onclick="validarFormulario()">
-                    <i class="fas fa-save"></i> Salvar Registro
-                </button>
-            </form>
-        </div>
+                    <div class="form-actions">
+                        <button type="submit" id="submitButton">
+                            <i class="fas fa-save"></i> Salvar Registro
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
 
         <!-- Área de Pesquisa -->
-        <div class="search-section">
-            <h2>🔎 Pesquisar Materiais</h2>
-            <input type="date" id="dataPesquisa" onchange="buscarRegistros()">
-            <div id="resultadosPesquisa"></div>
-        </div>
+        <section aria-labelledby="searchTitle">
+            <h2 id="searchTitle">🔎 Pesquisar Materiais</h2>
+            <div class="search-section">
+                <div class="form-group">
+                    <label for="dataPesquisa">Selecione uma data:</label>
+                    <input type="date" id="dataPesquisa" aria-label="Data para pesquisa de materiais" onchange="buscarRegistros()">
+                </div>
+                <div id="resultadosPesquisa" class="search-results" aria-live="polite"></div>
+            </div>
+        </section>
 
-        <!-- Botão para gerar relatório -->
-        <button type="button" onclick="gerarRelatorioPDF()">
-            <i class="fas fa-file-pdf"></i> Gerar Relatório
-        </button>
+        <!-- Relatório -->
+        <section aria-labelledby="reportSection">
+            <h2 id="reportSection" class="sr-only">Geração de Relatórios</h2>
+            <div class="report-actions">
+                <button type="button" onclick="gerarRelatorioPDF()" aria-label="Gerar relatório em PDF">
+                    <i class="fas fa-file-pdf"></i> Gerar Relatório
+                </button>
+            </div>
+        </section>
 
         <!-- Mensagens de Status -->
-        <div id="statusMessage" class="status-message"></div>
+        <div id="statusMessage" class="status-message" aria-live="assertive"></div>
     </div>
 
     <script src="script.js"></script>
