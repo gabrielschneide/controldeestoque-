@@ -6,23 +6,44 @@ const API_KEY = "$2a$10$7/4kIky21hKzyb3cd6xTf.X9EFsMKqgiMokRv37yoXy/nHJpFAsei";
 
 let registros = [];
 let editandoId = null;
+let tentativas = 0;
 
 // ================= FUNÇÕES PRINCIPAIS =================
 async function carregarDados() {
     try {
+        // Verifica conexão
+        if (!navigator.onLine) {
+            showMessage('Você está offline!', 'error');
+            return;
+        }
+
+        // Mostra animação de carregamento
         document.querySelector('.refresh-btn i').classList.add('loading');
         
+        // Busca dados da nuvem
         const response = await axios.get(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
             headers: { 'X-Master-Key': API_KEY }
         });
         
+        // Atualiza registros e lista
         registros = response.data.record.materiais;
-        showMessage('Dados atualizados da nuvem!', 'success');
         buscarRegistros();
+        showMessage('Dados carregados da nuvem!', 'success');
+        
+        // Armazena última atualização
+        localStorage.setItem('ultimaAtt', new Date().toISOString());
         
     } catch (error) {
-        showMessage('Falha ao carregar dados!', 'error');
+        // Tentativa de reconexão
+        if (tentativas < 3) {
+            tentativas++;
+            setTimeout(carregarDados, 2000); // Tenta novamente após 2 segundos
+            showMessage(`Tentando reconectar... (${tentativas}/3)`, 'warning');
+        } else {
+            showMessage('Falha ao carregar dados!', 'error');
+        }
     } finally {
+        // Remove animação de carregamento
         document.querySelector('.refresh-btn i').classList.remove('loading');
     }
 }
@@ -66,7 +87,7 @@ async function validarFormulario() {
         }
 
         await salvarNaNuvem();
-        carregarDados();
+        await carregarDados(); // Recarrega os dados após salvar
         limparFormulario();
 
     } catch (error) {
@@ -202,4 +223,4 @@ function formatarData(dataString) {
 }
 
 // ================= INICIALIZAÇÃO =================
-carregarDados();
+window.addEventListener('load', carregarDados); // Carrega dados ao abrir/atualizar
