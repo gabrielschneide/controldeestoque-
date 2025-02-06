@@ -1,61 +1,51 @@
 "use strict";
 
-// Configuração do JSONBin.io
-const BIN_ID = "67a3eeb29fd07d161ce4a764";
-const API_KEY = "$2a$10$7/4kIky21hKzyb3cd6xTf.X9EFsMKqgiMokRv37yoXy/nHJpFAsei";
+// Configuração do Firebase (SUAS CREDENCIAIS JÁ ESTÃO AQUI!)
+const firebaseConfig = {
+    apiKey: "AIzaSyDV8aMQDG1MxZunWtolMlJMu3SF6uBozEE",
+    authDomain: "estoque-materiais.firebaseapp.com",
+    projectId: "estoque-materiais",
+    storageBucket: "estoque-materiais.firebasestorage.app",
+    messagingSenderId: "893033145063",
+    appId: "1:893033145063:web:f9a3da6a47ae22e39a7842"
+};
+
+// Inicializar Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
 let registros = [];
 let editandoId = null;
-let tentativas = 0;
 
 // ================= FUNÇÕES PRINCIPAIS =================
 async function carregarDados() {
     try {
-        // Mostra animação de carregamento
         document.querySelector('.refresh-btn i').classList.add('loading');
-
-        // Primeiro, tenta carregar dados do localStorage para evitar espera
-        const dadosLocais = localStorage.getItem('registrosMateriais');
-        if (dadosLocais) {
-            registros = JSON.parse(dadosLocais);
-            buscarRegistros();
-        }
-
-        // Verifica conexão
-        if (!navigator.onLine) {
-            showMessage('Você está offline! Carregando dados locais.', 'warning');
-            return;
-        }
-
-        // Busca dados da nuvem
-        const response = await axios.get(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
-            headers: { 'X-Master-Key': API_KEY }
-        });
-
-        // Atualiza registros e salva no localStorage
-        registros = response.data.record.materiais;
-        localStorage.setItem('registrosMateriais', JSON.stringify(registros));
+        
+        const querySnapshot = await db.collection("materiais").get();
+        registros = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         buscarRegistros();
-
-        showMessage('Dados sincronizados com a nuvem!', 'success');
-
+        showMessage('Dados carregados!', 'success');
+        
     } catch (error) {
-        showMessage('Erro ao carregar dados!', 'error');
+        showMessage('Erro ao carregar dados: ' + error.message, 'error');
     } finally {
         document.querySelector('.refresh-btn i').classList.remove('loading');
     }
 }
 
-async function salvarNaNuvem() {
+async function salvarRegistro(registro) {
     try {
-        await axios.put(`https://api.jsonbin.io/v3/b/${BIN_ID}`, 
-            { materiais: registros },
-            { headers: { 'X-Master-Key': API_KEY } }
-        );
-        localStorage.setItem('registrosMateriais', JSON.stringify(registros)); // Atualiza cache local
-        showMessage('Dados salvos na nuvem!', 'success');
+        if (editandoId) {
+            await db.collection("materiais").doc(editandoId).update(registro);
+            showMessage('Registro atualizado!');
+        } else {
+            await db.collection("materiais").add(registro);
+            showMessage('Registro salvo na nuvem!');
+        }
+        await carregarDados();
     } catch (error) {
-        showMessage('Erro ao sincronizar com a nuvem!', 'error');
+        showMessage('Erro ao salvar: ' + error.message, 'error');
     }
 }
 
@@ -69,29 +59,9 @@ async function validarFormulario() {
         return;
     }
 
-    const novoRegistro = {
-        id: Date.now(),
-        data,
-        nomeMaterial: nome,
-        quantidade: qtd
-    };
-
-    try {
-        if (editandoId) {
-            const index = registros.findIndex(r => r.id === editandoId);
-            registros[index] = novoRegistro;
-            showMessage('Registro atualizado!', 'info');
-        } else {
-            registros.push(novoRegistro);
-            showMessage('Registro salvo!', 'success');
-        }
-
-        await salvarNaNuvem();
-        carregarDados();
-        limparFormulario();
-    } catch (error) {
-        showMessage('Erro ao salvar!', 'error');
-    }
+    const registro = { data, nomeMaterial: nome, quantidade: qtd };
+    await salvarRegistro(registro);
+    limparFormulario();
 }
 
 // ================= FUNÇÕES AUXILIARES =================
@@ -107,10 +77,10 @@ function buscarRegistros() {
                 <small>${r.data} - Quantidade: ${r.quantidade}</small>
             </div>
             <div class="registro-acoes">
-                <button class="editar-btn" onclick="editarRegistro(${r.id})">
+                <button class="editar-btn" onclick="editarRegistro('${r.id}')">
                     <i class="fas fa-edit"></i>
                 </button>
-                <button class="excluir-btn" onclick="excluirRegistro(${r.id})">
+                <button class="excluir-btn" onclick="excluirRegistro('${r.id}')">
                     <i class="fas fa-trash"></i>
                 </button>
             </div>
@@ -134,10 +104,13 @@ function editarRegistro(id) {
 
 async function excluirRegistro(id) {
     if (confirm('Excluir registro permanentemente?')) {
-        registros = registros.filter(r => r.id !== id);
-        await salvarNaNuvem();
-        carregarDados();
-        showMessage('Registro excluído!', 'info');
+        try {
+            await db.collection("materiais").doc(id).delete();
+            showMessage('Registro excluído!');
+            await carregarDados();
+        } catch (error) {
+            showMessage('Erro ao excluir: ' + error.message, 'error');
+        }
     }
 }
 
@@ -158,7 +131,7 @@ function showMessage(msg, tipo = 'success') {
 // ================= FUNÇÃO PARA GERAR PDF =================
 function gerarRelatorioPDF() {
     const filtroData = document.getElementById('filtroData').value;
-
+    
     if (!filtroData) {
         showMessage('Selecione uma data para gerar o relatório!', 'error');
         return;
@@ -173,21 +146,27 @@ function gerarRelatorioPDF() {
         return;
     }
 
+    // Configuração do PDF
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
 
+    // Título do Relatório
     doc.setFontSize(18);
     doc.text("Relatório de Materiais Civis", 14, 15);
     doc.setFontSize(12);
     doc.text(`Data: ${formatarData(filtroData)}`, 14, 25);
 
+    // Cabeçalho da Tabela
     const headers = [["Data", "Material", "Quantidade"]];
+
+    // Dados da Tabela
     const data = registrosFiltrados.map(registro => [
         formatarData(registro.data),
         registro.nomeMaterial,
         registro.quantidade
     ]);
 
+    // Gerar Tabela
     doc.autoTable({
         head: headers,
         body: data,
@@ -195,14 +174,24 @@ function gerarRelatorioPDF() {
         theme: 'grid',
         styles: { fontSize: 10 },
         headStyles: { fillColor: [41, 128, 185], textColor: 255 },
+        columnStyles: {
+            0: { cellWidth: 30 },
+            1: { cellWidth: 120 },
+            2: { cellWidth: 30 }
+        }
     });
 
+    // Salvar PDF
     doc.save(`relatorio_materiais_${filtroData}.pdf`);
 }
 
+// Função para formatar data
 function formatarData(dataString) {
     const data = new Date(dataString);
-    return `${data.getDate().toString().padStart(2, '0')}/${(data.getMonth() + 1).toString().padStart(2, '0')}/${data.getFullYear()}`;
+    const dia = String(data.getDate()).padStart(2, '0');
+    const mes = String(data.getMonth() + 1).padStart(2, '0');
+    const ano = data.getFullYear();
+    return `${dia}/${mes}/${ano}`;
 }
 
 // ================= INICIALIZAÇÃO =================
