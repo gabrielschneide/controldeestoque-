@@ -55,7 +55,12 @@ async function validarFormulario() {
         return;
     }
 
-    const registro = { data, nomeMaterial: nome, quantidade: qtd };
+    const registro = { 
+        data, 
+        nomeMaterial: nome, 
+        quantidade: qtd 
+    };
+    
     await salvarRegistro(registro);
     limparFormulario();
 }
@@ -76,6 +81,17 @@ function buscarRegistros() {
             </div>
         </div>
     `).join('');
+}
+
+// Função adicionada para edição
+function editarRegistro(id) {
+    const registro = registros.find(r => r.id === id);
+    if (registro) {
+        editandoId = id;
+        document.getElementById('dataRegistro').value = registro.data;
+        document.getElementById('nomeMaterial').value = registro.nomeMaterial;
+        document.getElementById('quantidade').value = registro.quantidade;
+    }
 }
 
 async function excluirRegistro(id) {
