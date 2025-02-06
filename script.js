@@ -1,6 +1,6 @@
 "use strict";
 
-// Configuração do JSONBin.io (SUAS CREDENCIAIS JÁ ESTÃO AQUI!)
+// Configuração do JSONBin.io
 const BIN_ID = "67a3eeb29fd07d161ce4a764";
 const API_KEY = "$2a$10$7/4kIky21hKzyb3cd6xTf.X9EFsMKqgiMokRv37yoXy/nHJpFAsei";
 
@@ -11,39 +11,37 @@ let tentativas = 0;
 // ================= FUNÇÕES PRINCIPAIS =================
 async function carregarDados() {
     try {
+        // Mostra animação de carregamento
+        document.querySelector('.refresh-btn i').classList.add('loading');
+
+        // Primeiro, tenta carregar dados do localStorage para evitar espera
+        const dadosLocais = localStorage.getItem('registrosMateriais');
+        if (dadosLocais) {
+            registros = JSON.parse(dadosLocais);
+            buscarRegistros();
+        }
+
         // Verifica conexão
         if (!navigator.onLine) {
-            showMessage('Você está offline!', 'error');
+            showMessage('Você está offline! Carregando dados locais.', 'warning');
             return;
         }
 
-        // Mostra animação de carregamento
-        document.querySelector('.refresh-btn i').classList.add('loading');
-        
         // Busca dados da nuvem
         const response = await axios.get(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
             headers: { 'X-Master-Key': API_KEY }
         });
-        
-        // Atualiza registros e lista
+
+        // Atualiza registros e salva no localStorage
         registros = response.data.record.materiais;
+        localStorage.setItem('registrosMateriais', JSON.stringify(registros));
         buscarRegistros();
-        showMessage('Dados carregados da nuvem!', 'success');
-        
-        // Armazena última atualização
-        localStorage.setItem('ultimaAtt', new Date().toISOString());
-        
+
+        showMessage('Dados sincronizados com a nuvem!', 'success');
+
     } catch (error) {
-        // Tentativa de reconexão
-        if (tentativas < 3) {
-            tentativas++;
-            setTimeout(carregarDados, 2000); // Tenta novamente após 2 segundos
-            showMessage(`Tentando reconectar... (${tentativas}/3)`, 'warning');
-        } else {
-            showMessage('Falha ao carregar dados!', 'error');
-        }
+        showMessage('Erro ao carregar dados!', 'error');
     } finally {
-        // Remove animação de carregamento
         document.querySelector('.refresh-btn i').classList.remove('loading');
     }
 }
@@ -54,6 +52,8 @@ async function salvarNaNuvem() {
             { materiais: registros },
             { headers: { 'X-Master-Key': API_KEY } }
         );
+        localStorage.setItem('registrosMateriais', JSON.stringify(registros)); // Atualiza cache local
+        showMessage('Dados salvos na nuvem!', 'success');
     } catch (error) {
         showMessage('Erro ao sincronizar com a nuvem!', 'error');
     }
@@ -77,19 +77,18 @@ async function validarFormulario() {
     };
 
     try {
-        if(editandoId) {
+        if (editandoId) {
             const index = registros.findIndex(r => r.id === editandoId);
             registros[index] = novoRegistro;
-            showMessage('Registro atualizado!');
+            showMessage('Registro atualizado!', 'info');
         } else {
             registros.push(novoRegistro);
-            showMessage('Registro salvo na nuvem!');
+            showMessage('Registro salvo!', 'success');
         }
 
         await salvarNaNuvem();
-        await carregarDados(); // Recarrega os dados após salvar
+        carregarDados();
         limparFormulario();
-
     } catch (error) {
         showMessage('Erro ao salvar!', 'error');
     }
@@ -134,11 +133,11 @@ function editarRegistro(id) {
 }
 
 async function excluirRegistro(id) {
-    if(confirm('Excluir registro permanentemente?')) {
+    if (confirm('Excluir registro permanentemente?')) {
         registros = registros.filter(r => r.id !== id);
         await salvarNaNuvem();
         carregarDados();
-        showMessage('Registro excluído!');
+        showMessage('Registro excluído!', 'info');
     }
 }
 
@@ -159,7 +158,7 @@ function showMessage(msg, tipo = 'success') {
 // ================= FUNÇÃO PARA GERAR PDF =================
 function gerarRelatorioPDF() {
     const filtroData = document.getElementById('filtroData').value;
-    
+
     if (!filtroData) {
         showMessage('Selecione uma data para gerar o relatório!', 'error');
         return;
@@ -174,27 +173,21 @@ function gerarRelatorioPDF() {
         return;
     }
 
-    // Configuração do PDF
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
 
-    // Título do Relatório
     doc.setFontSize(18);
     doc.text("Relatório de Materiais Civis", 14, 15);
     doc.setFontSize(12);
     doc.text(`Data: ${formatarData(filtroData)}`, 14, 25);
 
-    // Cabeçalho da Tabela
     const headers = [["Data", "Material", "Quantidade"]];
-
-    // Dados da Tabela
     const data = registrosFiltrados.map(registro => [
         formatarData(registro.data),
         registro.nomeMaterial,
         registro.quantidade
     ]);
 
-    // Gerar Tabela
     doc.autoTable({
         head: headers,
         body: data,
@@ -202,25 +195,15 @@ function gerarRelatorioPDF() {
         theme: 'grid',
         styles: { fontSize: 10 },
         headStyles: { fillColor: [41, 128, 185], textColor: 255 },
-        columnStyles: {
-            0: { cellWidth: 30 },
-            1: { cellWidth: 120 },
-            2: { cellWidth: 30 }
-        }
     });
 
-    // Salvar PDF
     doc.save(`relatorio_materiais_${filtroData}.pdf`);
 }
 
-// Função para formatar data
 function formatarData(dataString) {
     const data = new Date(dataString);
-    const dia = String(data.getDate()).padStart(2, '0');
-    const mes = String(data.getMonth() + 1).padStart(2, '0');
-    const ano = data.getFullYear();
-    return `${dia}/${mes}/${ano}`;
+    return `${data.getDate().toString().padStart(2, '0')}/${(data.getMonth() + 1).toString().padStart(2, '0')}/${data.getFullYear()}`;
 }
 
 // ================= INICIALIZAÇÃO =================
-window.addEventListener('load', carregarDados); // Carrega dados ao abrir/atualizar
+window.addEventListener('load', carregarDados);
