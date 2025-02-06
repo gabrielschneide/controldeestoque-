@@ -1,6 +1,6 @@
 "use strict";
 
-// Configuração do Firebase (SUAS CREDENCIAIS JÁ ESTÃO AQUI!)
+// Configuração do Firebase
 const firebaseConfig = {
     apiKey: "AIzaSyDV8aMQDG1MxZunWtolMlJMu3SF6uBozEE",
     authDomain: "estoque-materiais.firebaseapp.com",
@@ -18,15 +18,19 @@ let registros = [];
 let editandoId = null;
 
 // ================= FUNÇÕES PRINCIPAIS =================
+
+/**
+ * Carrega os dados do Firestore e atualiza a interface do usuário.
+ */
 async function carregarDados() {
     try {
         document.querySelector('.refresh-btn i').classList.add('loading');
-        
+
         const querySnapshot = await db.collection("materiais").get();
         registros = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         buscarRegistros();
         showMessage('Dados carregados!', 'success');
-        
+
     } catch (error) {
         showMessage('Erro ao carregar dados: ' + error.message, 'error');
     } finally {
@@ -34,6 +38,10 @@ async function carregarDados() {
     }
 }
 
+/**
+ * Salva um novo registro ou atualiza um registro existente no Firestore.
+ * @param {Object} registro - O registro a ser salvo.
+ */
 async function salvarRegistro(registro) {
     try {
         if (editandoId) {
@@ -49,6 +57,9 @@ async function salvarRegistro(registro) {
     }
 }
 
+/**
+ * Valida e envia o formulário de registro de materiais.
+ */
 async function validarFormulario() {
     const data = document.getElementById('dataRegistro').value;
     const nome = document.getElementById('nomeMaterial').value.trim();
@@ -65,10 +76,14 @@ async function validarFormulario() {
 }
 
 // ================= FUNÇÕES AUXILIARES =================
+
+/**
+ * Busca e exibe os registros filtrados pela data selecionada.
+ */
 function buscarRegistros() {
     const dataSelecionada = document.getElementById('dataPesquisa').value;
     const resultados = registros.filter(r => r.data === dataSelecionada);
-    
+
     const resultadosDiv = document.getElementById('resultadosPesquisa');
     resultadosDiv.innerHTML = resultados.map(r => `
         <div class="registro-item">
@@ -90,18 +105,26 @@ function buscarRegistros() {
     resultadosDiv.classList.toggle('show-results', resultados.length > 0);
 }
 
+/**
+ * Preenche o formulário com os dados de um registro para edição.
+ * @param {string} id - O ID do registro a ser editado.
+ */
 function editarRegistro(id) {
     const registro = registros.find(r => r.id === id);
-    
+
     document.getElementById('dataRegistro').value = registro.data;
     document.getElementById('nomeMaterial').value = registro.nomeMaterial;
     document.getElementById('quantidade').value = registro.quantidade;
-    
+
     editandoId = id;
     document.getElementById('submitButton').innerHTML = '<i class="fas fa-sync"></i> Atualizar';
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+/**
+ * Exclui um registro do Firestore.
+ * @param {string} id - O ID do registro a ser excluído.
+ */
 async function excluirRegistro(id) {
     if (confirm('Excluir registro permanentemente?')) {
         try {
@@ -114,12 +137,20 @@ async function excluirRegistro(id) {
     }
 }
 
+/**
+ * Limpa o formulário de registro de materiais.
+ */
 function limparFormulario() {
     document.getElementById('materialForm').reset();
     editandoId = null;
     document.getElementById('submitButton').innerHTML = '<i class="fas fa-save"></i> Salvar Registro';
 }
 
+/**
+ * Exibe uma mensagem de status para o usuário.
+ * @param {string} msg - A mensagem a ser exibida.
+ * @param {string} tipo - O tipo de mensagem (success ou error).
+ */
 function showMessage(msg, tipo = 'success') {
     const div = document.getElementById('statusMessage');
     div.className = `status-message ${tipo}`;
@@ -129,15 +160,19 @@ function showMessage(msg, tipo = 'success') {
 }
 
 // ================= FUNÇÃO PARA GERAR PDF =================
+
+/**
+ * Gera um relatório em PDF dos materiais filtrados por data.
+ */
 function gerarRelatorioPDF() {
     const filtroData = document.getElementById('filtroData').value;
-    
+
     if (!filtroData) {
         showMessage('Selecione uma data para gerar o relatório!', 'error');
         return;
     }
 
-    const registrosFiltrados = registros.filter(registro => 
+    const registrosFiltrados = registros.filter(registro =>
         registro.data === filtroData
     );
 
@@ -185,7 +220,11 @@ function gerarRelatorioPDF() {
     doc.save(`relatorio_materiais_${filtroData}.pdf`);
 }
 
-// Função para formatar data
+/**
+ * Formata uma string de data no formato DD/MM/YYYY.
+ * @param {string} dataString - A string de data a ser formatada.
+ * @returns {string} - A string de data formatada.
+ */
 function formatarData(dataString) {
     const data = new Date(dataString);
     const dia = String(data.getDate()).padStart(2, '0');
