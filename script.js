@@ -1,120 +1,157 @@
-"use strict";
+// Configuração do Sistema
+const CONFIGURACAO = {
+    GIST_ID: 'bc250af451d75b5bb8804e3f09174828',
+    FILENAME: 'estoque.json',
+    TOKEN: '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'
+};
 
-// Configuração do JSONBin.io
-const BIN_ID = "67a3eeb29fd07d161ce4a764"; // Seu Bin ID
-const API_KEY = "$2a$10$nLJMmE0TiglATAJbi/Htk.ASFsgc68bhXonWdrTMhU75P984NYpTS"; // Sua X-Master-Key
-let registros = [];
-let editandoId = null;
-
-// Função para carregar dados
-async function carregarDados() {
-    try {
-        const response = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
-            headers: { "X-Master-Key": API_KEY }
-        });
-        const data = await response.json();
-        registros = data.record.registros || []; // Garante que registros seja um array
-        buscarRegistros();
-        showMessage('Dados carregados!', 'success');
-    } catch (error) {
-        showMessage('Erro ao carregar dados: ' + error.message, 'error');
-    }
-}
-
-// Função para salvar dados
-async function salvarRegistro(registro) {
-    try {
-        if (editandoId) {
-            // Atualiza registro existente
-            const index = registros.findIndex(r => r.id === editandoId);
-            registros[index] = { ...registro, id: editandoId };
-        } else {
-            // Adiciona novo registro
-            registro.id = Date.now().toString(); // ID único
-            registros.push(registro);
-        }
-
-        // Envia dados atualizados para o JSONBin.io
-        await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json",
-                "X-Master-Key": API_KEY
-            },
-            body: JSON.stringify({ registros })
-        });
-
-        showMessage(editandoId ? 'Registro atualizado!' : 'Registro salvo!', 'success');
-        await carregarDados();
-        limparFormulario();
-    } catch (error) {
-        showMessage('Erro ao salvar: ' + error.message, 'error');
-    }
-}
-
-// Função para buscar registros
-function buscarRegistros() {
-    const dataSelecionada = document.getElementById('dataPesquisa').value;
-    const resultados = registros.filter(r => r.data === dataSelecionada);
-
-    const resultadosDiv = document.getElementById('resultadosPesquisa');
-    resultadosDiv.innerHTML = resultados.map(r => `
-        <div class="registro-item">
-            <div><strong>${r.nomeMaterial}</strong><br><small>${r.data} - Quantidade: ${r.quantidade}</small></div>
-            <div>
-                <button onclick="editarRegistro('${r.id}')"><i class="fas fa-edit"></i></button>
-                <button onclick="excluirRegistro('${r.id}')"><i class="fas fa-trash"></i></button>
-            </div>
-        </div>
-    `).join('');
-}
-
-// Função para editar registro
-function editarRegistro(id) {
-    const registro = registros.find(r => r.id === id);
-    if (registro) {
-        editandoId = id;
-        document.getElementById('dataRegistro').value = registro.data;
-        document.getElementById('nomeMaterial').value = registro.nomeMaterial;
-        document.getElementById('quantidade').value = registro.quantidade;
-    }
-}
-
-// Função para excluir registro
-async function excluirRegistro(id) {
-    if (confirm('Excluir registro permanentemente?')) {
-        try {
-            registros = registros.filter(r => r.id !== id);
-            await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-Master-Key": API_KEY
-                },
-                body: JSON.stringify({ registros })
-            });
-            showMessage('Registro excluído!', 'success');
-            await carregarDados();
-        } catch (error) {
-            showMessage('Erro ao excluir: ' + error.message, 'error');
-        }
-    }
-}
-
-// Função para limpar formulário
-function limparFormulario() {
-    document.getElementById('materialForm').reset();
-    editandoId = null;
-}
-
-// Função para exibir mensagens
-function showMessage(msg, tipo = 'success') {
-    const div = document.getElementById('statusMessage');
-    div.className = `status-message ${tipo}`;
-    div.textContent = msg;
-    div.style.display = 'block';
-    setTimeout(() => div.style.display = 'none', 3000);
-}
+// Variáveis Globais
+let dadosCompletos = [];
 
 // Inicialização
-window.addEventListener('load', carregarDados);
+document.addEventListener('DOMContentLoaded', async () => {
+    await carregarDados();
+    configurarEventListeners();
+});
+
+// Configurar Eventos
+function configurarEventListeners() {
+    document.getElementById('btnFiltrar').addEventListener('click', aplicarFiltro);
+    document.getElementById('btnLimparFiltro').addEventListener('click', limparFiltro);
+    document.getElementById('materialForm').addEventListener('submit', handleSubmit);
+}
+
+// Carregar Dados da Nuvem
+async function carregarDados() {
+    try {
+        const resposta = await fetch(`https://api.github.com/gists/${CONFIGURACAO.GIST_ID}`);
+        const dadosGist = await resposta.json();
+        dadosCompletos = JSON.parse(dadosGist.files[CONFIGURACAO.FILENAME].content);
+        atualizarTabela(dadosCompletos);
+    } catch (erro) {
+        console.error('Erro ao carregar:', erro);
+        mostrarAlerta('Falha na conexão com a nuvem!', 'erro');
+    }
+}
+
+// Manipular Formulário
+async function handleSubmit(e) {
+    e.preventDefault();
+    
+    const novoItem = {
+        id: Date.now().toString(),
+        data: document.getElementById('data').value,
+        material: document.getElementById('material').value,
+        quantidade: document.getElementById('quantidade').value
+    };
+
+    try {
+        await salvarNaNuvem([...dadosCompletos, novoItem]);
+        dadosCompletos.push(novoItem);
+        atualizarTabela(dadosCompletos);
+        e.target.reset();
+    } catch (erro) {
+        console.error('Erro ao salvar:', erro);
+        mostrarAlerta('Falha ao salvar na nuvem!', 'erro');
+    }
+}
+
+// Sistema de Filtro
+function aplicarFiltro() {
+    const dataSelecionada = document.getElementById('filtroData').value;
+    
+    if(!dataSelecionada) {
+        mostrarAlerta('Selecione uma data para filtrar!', 'aviso');
+        return;
+    }
+
+    const dadosFiltrados = dadosCompletos.filter(item => item.data === dataSelecionada);
+    atualizarTabela(dadosFiltrados);
+}
+
+function limparFiltro() {
+    document.getElementById('filtroData').value = '';
+    atualizarTabela(dadosCompletos);
+}
+
+// Atualizar Tabela
+function atualizarTabela(dados) {
+    const tbody = document.getElementById('tableBody');
+    tbody.innerHTML = '';
+    
+    dados.forEach(item => {
+        const tr = document.createElement('tr');
+        tr.dataset.id = item.id;
+        tr.innerHTML = `
+            <td>${item.data}</td>
+            <td>${item.material}</td>
+            <td>${item.quantidade}</td>
+            <td>
+                <button class="btn btn-excluir" data-id="${item.id}">
+                    🗑️ Excluir
+                </button>
+            </td>
+        `;
+        
+        tr.querySelector('.btn-excluir').addEventListener('click', () => excluirItem(item.id));
+        tbody.appendChild(tr);
+    });
+}
+
+// Excluir Item
+async function excluirItem(id) {
+    if(!confirm('Confirmar exclusão permanente?')) return;
+    
+    try {
+        const novosDados = dadosCompletos.filter(item => item.id !== id);
+        await salvarNaNuvem(novosDados);
+        dadosCompletos = novosDados;
+        atualizarTabela(dadosCompletos);
+    } catch (erro) {
+        console.error('Erro ao excluir:', erro);
+        mostrarAlerta('Falha na exclusão!', 'erro');
+    }
+}
+
+// Função de Salvamento na Nuvem
+async function salvarNaNuvem(dados) {
+    await fetch(`https://api.github.com/gists/${CONFIGURACAO.GIST_ID}`, {
+        method: 'PATCH',
+        headers: {
+            'Authorization': `token ${CONFIGURACAO.TOKEN}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            files: {
+                [CONFIGURACAO.FILENAME]: {
+                    content: JSON.stringify(dados)
+                }
+            }
+        })
+    });
+}
+
+// Sistema de Alertas
+function mostrarAlerta(mensagem, tipo) {
+    const cores = {
+        erro: '#dc3545',
+        aviso: '#ffc107',
+        sucesso: '#28a745'
+    };
+
+    const alerta = document.createElement('div');
+    alerta.style.position = 'fixed';
+    alerta.style.top = '20px';
+    alerta.style.right = '20px';
+    alerta.style.padding = '1rem';
+    alerta.style.borderRadius = '6px';
+    alerta.style.color = 'white';
+    alerta.style.backgroundColor = cores[tipo] || '#333';
+    alerta.textContent = mensagem;
+    
+    document.body.appendChild(alerta);
+    
+    setTimeout(() => {
+        alerta.remove();
+    }, 3000);
+}
