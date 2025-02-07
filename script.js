@@ -1,4 +1,4 @@
-const API_URL = 'https://script.google.com/macros/s/AKfycbz4lk0qR-FkjYbUfjEbBeNhoZVmXW1-KkGMsI3f-VAb41s3kCoEAc0Wcej7jy9UHSKOLQ/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbyp4RXi5xGGfKyKA9mhC0Fnf1kFgPDcvjppMY8nSX6IxftLXJYpzaCKhiQo9uDDEswbKw/exec';
 
 // Função para adicionar um novo material
 document.getElementById('estoqueForm').addEventListener('submit', async (e) => {
