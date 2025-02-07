@@ -1,4 +1,4 @@
-const API_URL = 'https://script.google.com/macros/s/AKfycbyp4RXi5xGGfKyKA9mhC0Fnf1kFgPDcvjppMY8nSX6IxftLXJYpzaCKhiQo9uDDEswbKw/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbxiNMfklAGHoqXn7ka0Xf0wEXRsw9DVLnlMB6iCekwbx8Ej4p7ROfQP7zzNaY-uRWxxrA/exec';
 
 // Função para adicionar um novo material
 document.getElementById('estoqueForm').addEventListener('submit', async (e) => {
@@ -8,6 +8,11 @@ document.getElementById('estoqueForm').addEventListener('submit', async (e) => {
     const material = document.getElementById('material').value;
     const quantidade = document.getElementById('quantidade').value;
 
+    if (!data || !material || !quantidade) {
+        alert('Por favor, preencha todos os campos.');
+        return;
+    }
+
     try {
         const response = await fetch(API_URL, {
             method: 'POST',
@@ -15,12 +20,17 @@ document.getElementById('estoqueForm').addEventListener('submit', async (e) => {
             body: JSON.stringify({ data, material, quantidade })
         });
 
-        if (response.ok) {
+        const result = await response.json();
+        
+        if (result.status === 'success') {
             alert('Material adicionado com sucesso!');
-            location.reload(); // Recarrega a página para atualizar a lista
+            carregarDados(); // Atualiza a tabela sem recarregar a página
+        } else {
+            alert('Erro ao adicionar material. Tente novamente.');
         }
     } catch (error) {
         console.error('Erro:', error);
+        alert('Ocorreu um erro ao enviar os dados. Verifique a conexão e tente novamente.');
     }
 });
 
@@ -28,6 +38,7 @@ document.getElementById('estoqueForm').addEventListener('submit', async (e) => {
 async function carregarDados() {
     try {
         const response = await fetch(API_URL);
+        if (!response.ok) throw new Error('Erro ao buscar os dados.');
         const dados = await response.json();
         atualizarTabela(dados);
     } catch (error) {
@@ -40,12 +51,17 @@ function atualizarTabela(dados) {
     const tbody = document.querySelector('#listaMateriais tbody');
     tbody.innerHTML = '';
 
+    if (!dados.length) {
+        tbody.innerHTML = '<tr><td colspan="3">Nenhum dado encontrado.</td></tr>';
+        return;
+    }
+
     dados.forEach(item => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td>${item.Data}</td>
-            <td>${item.Material}</td>
-            <td>${item.Quantidade}</td>
+            <td>${item.Data || '-'}</td>
+            <td>${item.Material || '-'}</td>
+            <td>${item.Quantidade || '-'}</td>
         `;
         tbody.appendChild(tr);
     });
@@ -62,5 +78,5 @@ function filtrarPorData() {
     });
 }
 
-// Inicializa o carregamento dos dados
-carregarDados();
+// Inicializa o carregamento dos dados ao abrir a página
+document.addEventListener('DOMContentLoaded', carregarDados);
