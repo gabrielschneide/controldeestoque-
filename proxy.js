@@ -10,8 +10,18 @@ app.use((req, res, next) => {
 });
 
 app.all('/proxy', (req, res) => {
-  const url = 'https://script.google.com/macros/s/AKfycbxUTRMFNPsbeu-_hoKOU7wl-WLpIFcVeXajWAAbpnIvP0_GKiDeprh5A56_5w5tlxGSZA/exec';
-  req.pipe(request({ qs: req.query, uri: url })).pipe(res);
+  const url = 'https://script.google.com/macros/s/AKfycbxM8yhoC_oc5Acwm1FER3BeVO_G_XFtLcTudeZCnBiGpBUOvwNQUYH98db2r7qdvuKEVw/exec';
+  const method = req.method;
+
+  const options = {
+    uri: url,
+    method: method,
+    json: true,
+    body: req.body,
+    qs: req.query
+  };
+
+  req.pipe(request(options)).pipe(res);
 });
 
 app.listen(PORT, () => {
