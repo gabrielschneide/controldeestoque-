@@ -1,4 +1,4 @@
-const API_URL = 'https://script.google.com/macros/s/AKfycbxx2F-jmiZPokvA3_KZwo3mVM_BRi1tMOPT1Sk6T5sPEPpCySyU5Wcuahx_mA3fnb20Qw/exec';
+const API_URL = '';
 
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("form");
@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    
+
     const data = document.getElementById("data").value;
     const material = document.getElementById("material").value;
     const quantidade = document.getElementById("quantidade").value;
@@ -28,10 +28,10 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       const result = await response.json();
-      
+
       if (result.status === "success") {
         alert("Dados salvos! Atualizando a tabela...");
-        await carregarDados(); 
+        await carregarDados();
       } else {
         alert("Erro: " + (result.message || "Resposta inválida da API"));
       }
@@ -48,7 +48,7 @@ document.addEventListener("DOMContentLoaded", () => {
 async function carregarDados() {
   try {
     const response = await fetch(API_URL);
-    
+
     // Verifica se a resposta é válida
     if (!response.ok) {
       throw new Error(`Erro HTTP: ${response.status}`);
@@ -70,7 +70,7 @@ async function carregarDados() {
 
 function atualizarTabela(dados) {
   const tbody = document.querySelector("#listaMateriais tbody");
-  
+
   if (!tbody) {
     console.error("Tabela não encontrada!");
     return;
