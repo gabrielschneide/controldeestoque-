@@ -1,42 +1,43 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Controle Estoque - Materiais Civis</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Controle de Estoque</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="container">
-        <h1>🏗️ Controle de Materiais</h1>
+    <h1>Controle de Estoque de Material Civil</h1>
+    
+    <form id="estoqueForm">
+        <label for="data">Data:</label>
+        <input type="date" id="data" required>
         
-        <div class="filtro-section">
-            <input type="date" id="filtroData">
-            <button class="btn btn-info" id="btnFiltrar">Filtrar</button>
-            <button class="btn btn-info" id="btnLimparFiltro">Mostrar Tudo</button>
-        </div>
+        <label for="material">Material:</label>
+        <input type="text" id="material" required>
+        
+        <label for="quantidade">Quantidade:</label>
+        <input type="number" id="quantidade" required>
+        
+        <button type="submit">Adicionar</button>
+    </form>
 
-        <form id="materialForm">
-            <div class="form-group">
-                <input type="date" id="data" required>
-                <input type="text" id="material" placeholder="Material" required>
-                <input type="number" id="quantidade" placeholder="Qtd" min="0" required>
-            </div>
-            <button type="submit" class="btn btn-adicionar">➕ Adicionar</button>
-        </form>
+    <h2>Filtrar por Data</h2>
+    <input type="date" id="filtroData">
+    <button onclick="filtrarPorData()">Filtrar</button>
 
-        <table>
-            <thead>
-                <tr>
-                    <th>Data</th>
-                    <th>Material</th>
-                    <th>Quantidade</th>
-                    <th class="acoes-cell">Ações</th>
-                </tr>
-            </thead>
-            <tbody id="tableBody"></tbody>
-        </table>
-    </div>
+    <h2>Lista de Materiais</h2>
+    <table id="listaMateriais">
+        <thead>
+            <tr>
+                <th>Data</th>
+                <th>Material</th>
+                <th>Quantidade</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
 
     <script src="script.js"></script>
 </body>
