@@ -10,7 +10,7 @@ app.use((req, res, next) => {
 });
 
 app.all('/proxy', (req, res) => {
-  const url = 'https://script.google.com/macros/s/AKfycbxx2F-jmiZPokvA3_KZwo3mVM_BRi1tMOPT1Sk6T5sPEPpCySyU5Wcuahx_mA3fnb20Qw/exec';
+  const url = 'https://script.google.com/macros/s/AKfycbxUTRMFNPsbeu-_hoKOU7wl-WLpIFcVeXajWAAbpnIvP0_GKiDeprh5A56_5w5tlxGSZA/exec';
   req.pipe(request({ qs: req.query, uri: url })).pipe(res);
 });
 
