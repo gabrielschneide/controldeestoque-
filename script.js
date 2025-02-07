@@ -1,4 +1,4 @@
-const API_URL = 'https://script.google.com/macros/s/AKfycbxpy-WyhVPnXMOECgu1Bc6dxLZzdU86Vj8NeUVYAPp5TsjOmZ-VbfjSxKPEw9wr5O1O/exec'; // Cole sua URL aqui
+const API_URL = 'https://script.google.com/macros/s/AKfycbxtGkx_S_VYAx6_gcj92OrQx6PJKRr5aO5sBjScQoDa-xkAgmrPOlhQ7mx9xVplvY8Ptw/exec'; // Cole sua URL aqui
 
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("form");
