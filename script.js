@@ -1,4 +1,4 @@
-const API_URL = 'https://script.google.com/macros/s/AKfycbxDJpjQXRpjUEjZPt_QyhRR4aFgiQEl4AZ_KcS9ShtJgSsOrPQsAZNz9t5xe6B3omviEA/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbxrUrJAhy9gi2eIRp-jShNUa5ypPwORy4nMcF815kMRx6nEWgEMTe9KTUE5m5nM2tu-/exec';
 
 // Função para adicionar um novo material
 document.getElementById("form").addEventListener("submit", function (event) {
