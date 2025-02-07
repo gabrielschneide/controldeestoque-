@@ -1,3 +1,6 @@
+const API_URL = 'https://script.google.com/macros/s/AKfycbxDJpjQXRpjUEjZPt_QyhRR4aFgiQEl4AZ_KcS9ShtJgSsOrPQsAZNz9t5xe6B3omviEA/exec';
+
+// Função para adicionar um novo material
 document.getElementById("form").addEventListener("submit", function (event) {
   event.preventDefault();
 
@@ -11,7 +14,7 @@ document.getElementById("form").addEventListener("submit", function (event) {
     quantidade: quantidade
   };
 
-  fetch('https://script.google.com/macros/s/AKfycbwofgfKcPnRCJecratt1-dgaQpz0VeS8M8wlCxEKTS9DHsyOOYvJzL4KHa2pZ7G4U32rw/exec', {
+  fetch(API_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
