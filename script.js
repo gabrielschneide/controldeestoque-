@@ -1,103 +1,67 @@
-const API_URL = 'http://localhost:3000/proxy';
+document.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById('item-form');
+  const listaItens = document.getElementById('lista-itens');
+  const filtroDataInput = document.getElementById('filtro-data');
+  const filtrarBtn = document.getElementById('filtrar-btn');
 
-document.addEventListener("DOMContentLoaded", () => {
-  const form = document.getElementById("form");
+  let estoque = []; // Inicializa o array de estoque
 
-  if (!form) {
-    console.error("Formulário não encontrado!");
-    return;
+  // Carregar dados do LocalStorage
+  function carregarEstoque() {
+    const estoqueSalvo = localStorage.getItem('estoque');
+    if (estoqueSalvo) {
+      estoque = JSON.parse(estoqueSalvo);
+      atualizarLista();
+    }
   }
 
-  form.addEventListener("submit", async (e) => {
+  // Salvar dados no LocalStorage
+  function salvarEstoque() {
+    localStorage.setItem('estoque', JSON.stringify(estoque));
+  }
+
+  // Adicionar item ao estoque
+  form.addEventListener('submit', (e) => {
     e.preventDefault();
 
-    const data = document.getElementById("data").value;
-    const material = document.getElementById("material").value;
-    const quantidade = document.getElementById("quantidade").value;
+    const data = document.getElementById('data').value;
+    const material = document.getElementById('material').value;
+    const quantidade = parseInt(document.getElementById('quantidade').value);
 
-    try {
-      const response = await fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ data, material, quantidade }),
-      });
-
-      // Verifica se a resposta é válida
-      if (!response.ok) {
-        throw new Error(`Erro HTTP: ${response.status}`);
-      }
-
-      const result = await response.json();
-
-      if (result.status === "success") {
-        alert("Dados salvos! Atualizando a tabela...");
-        await carregarDados();
-      } else {
-        alert("Erro: " + (result.message || "Resposta inválida da API"));
-      }
-    } catch (error) {
-      alert("Erro de conexão. Verifique o console.");
-      console.error("Erro no envio:", error);
-    }
+    const item = { data, material, quantidade };
+    estoque.push(item);
+    salvarEstoque();
+    atualizarLista();
+    form.reset();
   });
 
-  // Carrega os dados ao abrir a página
-  carregarDados();
+  // Atualizar a lista de itens na tela
+  function atualizarLista() {
+    listaItens.innerHTML = '';
+    estoque.forEach(item => {
+      const li = document.createElement('li');
+      li.textContent = `${item.data} - ${item.material} - Quantidade: ${item.quantidade}`;
+      listaItens.appendChild(li);
+    });
+  }
+
+  // Filtrar por data
+  filtrarBtn.addEventListener('click', () => {
+    const filtroData = filtroDataInput.value;
+    const estoqueFiltrado = estoque.filter(item => item.data === filtroData);
+    atualizarListaFiltrada(estoqueFiltrado);
+  });
+
+  // Atualizar a lista com os itens filtrados
+  function atualizarListaFiltrada(estoqueFiltrado) {
+    listaItens.innerHTML = '';
+    estoqueFiltrado.forEach(item => {
+      const li = document.createElement('li');
+      li.textContent = `${item.data} - ${item.material} - Quantidade: ${item.quantidade}`;
+      listaItens.appendChild(li);
+    });
+  }
+
+  // Inicializar
+  carregarEstoque();
 });
-
-async function carregarDados() {
-  try {
-    const response = await fetch(API_URL);
-
-    // Verifica se a resposta é válida
-    if (!response.ok) {
-      throw new Error(`Erro HTTP: ${response.status}`);
-    }
-
-    const dados = await response.json();
-
-    // Verifica se os dados são um array
-    if (!Array.isArray(dados)) {
-      throw new Error("Resposta da API não é um array!");
-    }
-
-    atualizarTabela(dados);
-  } catch (error) {
-    console.error("Erro ao carregar dados:", error);
-    alert("Erro ao carregar dados. Verifique o console.");
-  }
-}
-
-function atualizarTabela(dados) {
-  const tbody = document.querySelector("#listaMateriais tbody");
-
-  if (!tbody) {
-    console.error("Tabela não encontrada!");
-    return;
-  }
-
-  // Verifica se há dados
-  if (dados.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="3">Nenhum dado encontrado.</td></tr>';
-    return;
-  }
-
-  // Constrói as linhas da tabela
-  tbody.innerHTML = dados.map(item => `
-    <tr>
-      <td>${item.Data || '-'}</td>
-      <td>${item.Material || '-'}</td>
-      <td>${item.Quantidade || '-'}</td>
-    </tr>
-  `).join("");
-}
-
-function filtrarPorData() {
-  const dataFiltro = document.getElementById("filtroData").value;
-  const linhas = document.querySelectorAll("#listaMateriais tbody tr");
-
-  linhas.forEach(linha => {
-    const data = linha.cells[0].textContent;
-    linha.style.display = data === dataFiltro ? "" : "none";
-  });
-}
